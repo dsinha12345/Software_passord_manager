@@ -1,0 +1,31 @@
+<!-- users/templates/users/dashboard.html -->
+{% extends 'base_generic.html' %}
+{% block content %}
+  <h2>Password Manager Dashboard</h2>
+  <a href="{% url 'add_password' %}">Add New Password</a>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Website</th>
+        <th>Username</th>
+        <th>Password</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for password in passwords %}
+        <tr>
+          <td>{{ password.service_name }}</td>
+          <td>{{ password.username }}</td>
+          <td>{{ password.password }}</td> <!-- You might want to mask this field or use a toggle to show it -->
+          <td>
+            <a href="{% url 'edit_password' password.id %}">Edit</a>
+            <a href="{% url 'delete_password' password.id %}">Delete</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endblock %}

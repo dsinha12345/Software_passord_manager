@@ -30,20 +30,21 @@
                                 <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link" href="{% url 'generate_password' %}">Generate</a>
+                            </li>
+                            <li class="nav-item">
                                 <form method="POST" action="{% url 'logout' %}">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-outline-primary">Logout</button>
                                 </form>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'dashboard' %}">Generate</a>
-                            </li>
+                            
                         {% else %}
                             <li class="nav-item">
-                                <a class="button_header" href="{% url 'login' %}">Login</a>
+                                <a class="button_header nav-link" href="{% url 'login' %}">Login</a>
                             </li>
                             <li class="nav-item">
-                                <a class="button_header" href="{% url 'register' %}">Register</a>
+                                <a class="button_header nav-link" href="{% url 'register' %}">Register</a>
                             </li>
                         {% endif %}
                     </ul>

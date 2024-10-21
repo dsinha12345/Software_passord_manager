@@ -7,7 +7,10 @@ from .forms import UserRegisterForm, PasswordForm
 from .models import Password
 from django.contrib.auth.decorators import login_required
 from django.views import View
+import os
+import google.generativeai as genai
 
+genai.configure(api_key=os.environ.get("API_KEY"))
 
 def register(request):
     if request.method == 'POST':
@@ -82,20 +85,47 @@ def add_password_view(request):
         form = PasswordForm()
 
     return render(request, 'users/add_password.html', {'form': form})
+@login_required
+def password_generator_view(request):
+    # Initialize chat_history from session, or create a new list if it doesn't exist
+    chat_history = request.session.get('chat_history', [])
+    bot_response = None
+    
+    if request.method == 'POST':
+        user_message = request.POST.get('user_message')
+        
+        # Add user's message to chat history
+        chat_history.append({'user': 'You', 'text': user_message})
+        
+        try:
+            # Generate a response using the Google Generative AI Gemini model
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(user_message)
+            bot_response = response.text  # Extract the response text
+            
+            # Add bot response to chat history
+            chat_history.append({'user': 'Bot', 'text': bot_response})
+        except Exception as e:
+            bot_response = f"Sorry, I encountered an error: {str(e)}"
+
+        # Save updated chat_history back to session
+        request.session['chat_history'] = chat_history
+
+    context = {
+        'chat_history': chat_history,
+        'bot_response': bot_response
+    }
+    
+    return render(request, 'users/generate_password.html', context)
+
 
 class CustomLogoutView(View):
     def get(self, request, *args, **kwargs):
-        messages.get_messages(request).used = True  # Mark existing messages as used
+        # Clear all messages in the session
+        storage = messages.get_messages(request)
+        storage.used = True  # Mark existing messages as used
+        storage._loaded = False  # Reset the loaded state to clear messages
+
         logout(request)  # Log the user out
         messages.success(request, "You have been logged out successfully.")  # Optional message
-        return redirect('home')  # Redirect to the login page or any other page
-# @login_required
-# def password_generator_view(request):
-#     password_suggestion = ""
-    
-#     if request.method == 'POST':
-#         likes = request.POST.get('likes', '')
-#         prompt = f"Generate a secure password based on these preferences: {likes}"
-#         password_suggestion = get_password_suggestion(prompt)
-    
-#     return render(request, 'password_generator.html', {'password_suggestion': password_suggestion})
+        return redirect('home')  # Redirect to the home page or any other page

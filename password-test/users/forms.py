@@ -9,6 +9,12 @@ class UserRegisterForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2']
+        widgets = {
+            'username': forms.TextInput(attrs={'placeholder': 'Username'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'Email'}),
+            'password1': forms.PasswordInput(attrs={'placeholder': 'Enter your password'}),
+            'password2': forms.PasswordInput(attrs={'placeholder': 'Confirm your password'}),
+        }
 
 class PasswordForm(forms.ModelForm):
     class Meta:

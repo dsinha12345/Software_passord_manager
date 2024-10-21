@@ -1,16 +1,25 @@
-<!-- users/templates/users/login.html -->
+<!-- /templates/users/login.html-->
 {% extends "base_generic.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
 
 {% block content %}
+<div class="login-container">
+  <div class="logo-container">
+    <img src="{% static 'images/Logo.jpeg' %}" alt="BeeSafe Logo" class="logo">
+  </div>
+  
   <h2>Login</h2>
   
-  <!-- Display error messages -->
   {% if messages %}
-      <ul class="messages">
-      {% for message in messages %}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}
-      </ul>
+    <ul class="messages">
+    {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+    </ul>
   {% endif %}
 
   <form method="POST">
@@ -18,4 +27,9 @@
     {{ form.as_p }}
     <button type="submit">Login</button>
   </form>
+  
+  <p class="register-link">
+    Not a member? <a href="{% url 'register' %}">Register here</a>
+  </p>
+</div>
 {% endblock %}

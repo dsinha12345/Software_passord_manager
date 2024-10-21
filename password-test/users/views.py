@@ -1,11 +1,13 @@
 # users/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from .forms import UserRegisterForm, PasswordForm
 from .models import Password
 from django.contrib.auth.decorators import login_required
+from django.views import View
+
 
 def register(request):
     if request.method == 'POST':
@@ -80,3 +82,20 @@ def add_password_view(request):
         form = PasswordForm()
 
     return render(request, 'users/add_password.html', {'form': form})
+
+class CustomLogoutView(View):
+    def get(self, request, *args, **kwargs):
+        messages.get_messages(request).used = True  # Mark existing messages as used
+        logout(request)  # Log the user out
+        messages.success(request, "You have been logged out successfully.")  # Optional message
+        return redirect('home')  # Redirect to the login page or any other page
+# @login_required
+# def password_generator_view(request):
+#     password_suggestion = ""
+    
+#     if request.method == 'POST':
+#         likes = request.POST.get('likes', '')
+#         prompt = f"Generate a secure password based on these preferences: {likes}"
+#         password_suggestion = get_password_suggestion(prompt)
+    
+#     return render(request, 'password_generator.html', {'password_suggestion': password_suggestion})

@@ -1,31 +1,74 @@
-<!-- users/templates/users/dashboard.html -->
 {% extends 'base_generic.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
 {% block content %}
-  <h2>Password Manager Dashboard</h2>
-  <a href="{% url 'add_password' %}">Add New Password</a>
+<div class="dashboard-container">
+  <h2>Password Manager</h2>
+  <a href="{% url 'add_password' %}" class="add-password-btn">Add New Password</a>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Website</th>
-        <th>Username</th>
-        <th>Password</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for password in passwords %}
-        <tr>
-          <td>{{ password.service_name }}</td>
-          <td>{{ password.username }}</td>
-          <td>{{ password.password }}</td> <!-- You might want to mask this field or use a toggle to show it -->
-          <td>
-            <a href="{% url 'edit_password' password.id %}">Edit</a>
-            <a href="{% url 'delete_password' password.id %}">Delete</a>
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% if passwords %}
+    <div class="table-responsive">
+      <table class="password-table">
+        <thead>
+          <tr>
+            <th>Website</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for password in passwords %}
+            <tr>
+              <td>{{ password.service_name }}</td>
+              <td>{{ password.username }}</td>
+              <td class="password-cell">
+                <span class="password-mask">••••••••</span>
+                <span class="password-text" style="display: none;">{{ password.password }}</span>
+                <button class="toggle-password">
+                  <i class="fas fa-eye"></i> <!-- Eye icon -->
+                </button>
+              </td>
+              <td class="actions-cell">
+                <a href="{% url 'edit_password' password.id %}" class="edit-btn">Edit</a>
+                <a href="{% url 'delete_password' password.id %}" class="delete-btn">Delete</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="no-passwords">No passwords added yet. Click "Add New Password" to get started!</p>
+  {% endif %}
+</div>
 
+<script>
+document.querySelectorAll('.toggle-password').forEach(button => {
+  button.addEventListener('click', function() {
+    const passwordCell = this.closest('.password-cell');
+    const passwordMask = passwordCell.querySelector('.password-mask');
+    const passwordText = passwordCell.querySelector('.password-text');
+    const icon = this.querySelector('i');
+
+    if (passwordMask.style.display !== 'none') {
+      passwordMask.style.display = 'none';
+      passwordText.style.display = 'inline';
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash'); // Change to eye-slash icon
+    } else {
+      passwordMask.style.display = 'inline';
+      passwordText.style.display = 'none';
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye'); // Change back to eye icon
+    }
+  });
+});
+
+</script>
 {% endblock %}

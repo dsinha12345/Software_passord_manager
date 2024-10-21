@@ -19,6 +19,8 @@ from django.contrib import admin
 from django.urls import path, include
 from users import views  # Import the view from your users app
 from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,4 +28,3 @@ urlpatterns = [
     path('', views.home, name='home'),  # Add this line to handle the homepage
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]
-

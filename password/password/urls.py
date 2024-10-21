@@ -23,5 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),  # Include the users app URLs
     path('', views.home, name='home'),  # Add this line to handle the homepage
+    path('', include('password_generator.urls')),  # Include the password_generator app URLs
 ]
 

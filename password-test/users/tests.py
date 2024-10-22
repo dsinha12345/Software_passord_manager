@@ -118,45 +118,40 @@ class UserViewsTestCase(TestCase):
 
     @patch('users.views.initialize_model')
     def test_successful_user_message_processing(self, mock_initialize_model):
+        # Log in the user
         self.client.login(username='testuser', password='password@123')
 
         # Mock the model's response
         mock_model_instance = mock_initialize_model.return_value
         mock_model_instance.generate_content.return_value = MagicMock(text='Generated password: applePie')
 
-        # Simulate POST request with 'user_message'
-        response = self.client.post(reverse('generate_password'), {'user_message': 'fruits'})
+        # Simulate AJAX POST request with 'user_message'
+        response = self.client.post(reverse('generate_password'), 
+                                    {'user_message': 'fruits'}, 
+                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
-        # Assertions
+        # Ensure the response is successful
         self.assertEqual(response.status_code, 200)
 
-        # Parse the response content
-        soup = BeautifulSoup(response.content, 'html.parser')
-
-        # Find the user's message
-        user_message_div = soup.find('div', class_='message you-message')
-        self.assertIsNotNone(user_message_div)
-        self.assertIn('fruits', user_message_div.get_text())
-
-        # Find the bot's message
-        bot_message_div = soup.find('div', class_='message bot-message')
-        self.assertIsNotNone(bot_message_div)
-        self.assertIn('Generated password: applePie', bot_message_div.get_text())
-
-        # Check that the chat history is saved in the session
-        chat_history = self.client.session.get('chat_history')
-        self.assertEqual(len(chat_history), 2)  # User and bot messages
+        # Ensure the response contains JSON data
+        json_response = response.json()
+        self.assertEqual(json_response['status'], 'success')
+        self.assertIn('Generated password', json_response['bot_response'])
 
     @patch('users.views.initialize_model')
     def test_user_message_processing_failure_due_to_missing_input(self, mock_initialize_model):
+        # Log in the user
         self.client.login(username='testuser', password='password@123')
 
-        mock_model_instance = mock_initialize_model.return_value
-        mock_model_instance.generate_content.return_value = MagicMock(text='Generated password: applePie')
+        # Simulate AJAX POST request with missing 'user_message'
+        response = self.client.post(reverse('generate_password'), 
+                                    {'user_message': ''}, 
+                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
-        # Simulate POST request with missing 'user_message'
-        response = self.client.post(reverse('generate_password'), {'user_message': ''})
+        # Check the response status for 400 Bad Request
+        self.assertEqual(response.status_code, 400)
 
-        # Assertions
-        self.assertEqual(response.status_code, 400)  # Expecting a Bad Request status
-        self.assertContains(response, 'User message is required. Please enter a valid message.', status_code=400)
+        # Ensure the response contains JSON data with an error message
+        json_response = response.json()
+        self.assertEqual(json_response['status'], 'error')
+        self.assertIn('User message is required', json_response['message'])

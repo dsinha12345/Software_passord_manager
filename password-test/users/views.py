@@ -8,10 +8,8 @@ from .forms import UserRegisterForm, PasswordForm, VerifyUserPasswordForm
 from .models import Password
 from django.contrib.auth.decorators import login_required
 from django.views import View
-from datetime import datetime
 import os
 import google.generativeai as genai
-import html  # To escape special characters
 from django.http import JsonResponse
 import html
 import re
@@ -21,13 +19,15 @@ genai.configure(api_key=os.environ.get("AIzaSyDkc_ZX6AwRxG8rWp32sTH5OmOuD-x2fZo"
 def verify_user_password(view_func):
     def wrapper(request, *args, **kwargs):
         # Store the original path and method in session
-        request.session['intended_path'] = request.path
-        request.session['intended_method'] = request.method
         
         if 'verified_for_path' in request.session and request.session['verified_for_path'] == request.path:
-            # Clear the verification after use
-            del request.session['verified_for_path']
-            return view_func(request, *args, **kwargs)
+            
+            response = view_func(request, *args, **kwargs)
+        
+            if getattr(response, 'status_code', None) == 302:
+                request.session.pop('verified_for_path', None)
+            
+            return response
             
         if request.method == 'POST':
             if 'verify_password' in request.POST:
@@ -36,6 +36,7 @@ def verify_user_password(view_func):
                     entered_password = verification_form.cleaned_data['password']
                     if check_password(entered_password, request.user.password):
                         request.session['verified_for_path'] = request.path
+                        # Redirect to the same URL, but now with verification
                         return redirect(request.path)
                     else:
                         messages.error(request, 'Incorrect password. Please try again.')
@@ -44,8 +45,16 @@ def verify_user_password(view_func):
                             'next_url': request.path
                         })
             
-        # Show verification form
-        verification_form = VerifyUserPasswordForm(initial={'next_action': request.path})
+            # If it's a POST but not a verification attempt, show the verification form
+            # This prevents bypassing verification on form submissions
+            verification_form = VerifyUserPasswordForm()
+            return render(request, 'users/verify_password.html', {
+                'form': verification_form,
+                'next_url': request.path
+            })
+        
+        # Show verification form for GET requests
+        verification_form = VerifyUserPasswordForm()
         return render(request, 'users/verify_password.html', {
             'form': verification_form,
             'next_url': request.path

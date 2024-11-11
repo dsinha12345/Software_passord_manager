@@ -14,7 +14,7 @@ from django.http import JsonResponse
 import html
 import re
 
-genai.configure(api_key=os.environ.get("AIzaSyDkc_ZX6AwRxG8rWp32sTH5OmOuD-x2fZo"))
+genai.configure(api_key=(""))
 
 def verify_user_password(view_func):
     def wrapper(request, *args, **kwargs):

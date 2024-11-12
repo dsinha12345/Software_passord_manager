@@ -11,6 +11,8 @@ import os
 import google.generativeai as genai
 import html  # To escape special characters
 from django.http import JsonResponse
+import html
+import re
 
 genai.configure(api_key=os.environ.get("API_KEY"))
 
@@ -94,127 +96,164 @@ def initialize_model(system_instruction):
 @login_required
 def password_generator_view(request):
     chat_history = request.session.get('chat_history', [])
-    bot_response = None
-
-    if request.method == 'POST':
+    
+    # Handle AJAX POST request
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         user_message = request.POST.get('user_message', '').strip()
-
-        if user_message:  
-            # Prepare the message with formatting instructions
-            formatted_message = f"""
-            X:
-
-            ** Password Suggestions related to the X: **
-
-            **Easy to Remember:**
-            * **[Password 1]**
-            * **[Password 2]**
-            * **[Password 3]**
-
-            **More Secure (using symbols and numbers):**
-            * **[Password 4]**
-            * **[Password 5]**
-
-            **Unique and Specific:**
-            * **[Password 6]**
-            * **[Password 7]**
-
-            **Tips for Strong Passwords:**
-            * **[Tip 1]**
-            * **[Tip 2]**
-
-            **Remember:**
-            * **[Reminder 1]**
-            * **[Reminder 2]**
-            """
-
-            # Append the user message to chat history
-            chat_history.append({'user': 'You', 'text': format_message(user_message)})
-
-            try:
-                # Initialize the model with the correct system_instruction
-                model = initialize_model(formatted_message)
-                response = model.generate_content(user_message)
-                print(response)
-                bot_response = response.text  
-
-                # Check if response is in expected format
-                if response.text:
-                    formatted_response = format_message(bot_response)
-                    chat_history.append({'user': 'Bot', 'text': formatted_response})
-                else:
-                    bot_response = "No valid response generated."
-                    chat_history.append({'user': 'Bot', 'text': format_message(bot_response)})
-                    
-            except Exception as e:
-                # More specific exception handling
-                bot_response = f"Sorry, I encountered an error while processing your request: {str(e)}"
-                formatted_response = format_message(bot_response)
-                chat_history.append({'user': 'Bot', 'text': formatted_response})
-
-        else:
-            # If user input is empty, return a 400 Bad Request response
+        
+        if not user_message:
             return JsonResponse({
-                'error': 'User message is required. Please enter a valid message.'
+                'status': 'error',
+                'message': 'User message is required. Please enter a valid message.'
             }, status=400)
 
-        # Save the updated chat history back to the session
-        request.session['chat_history'] = chat_history
+        try:
+            # Prepare the message with formatting instructions
+            formatted_message = f"""Based on the topic "{user_message}", here are personalized password suggestions:
 
-    # Initialize bot_response for the initial GET request
+🔑 Easy to Remember
+* {user_message}-inspired simple passwords:
+  - [Strong Password 1]
+  - [Strong Password 2]
+  - [Strong Password 3]
+
+🛡️ Enhanced Security
+* Complex variations with symbols & numbers:
+  - [Complex Password 1]
+  - [Complex Password 2]
+
+🎯 Unique & Topic-Specific
+* Specialized combinations:
+  - [Unique Password 1]
+  - [Unique Password 2]
+
+📝 Security Tips
+* [Specific tip related to password structure]
+* [Specific tip related to password management]
+
+⚠️ Important Reminders
+* Never reuse passwords across different accounts
+* Store passwords securely using a password manager
+"""
+            # Generate response using the model
+            model = initialize_model(formatted_message)
+            response = model.generate_content(user_message)
+            
+            if response.text:
+                bot_response = format_message(response.text)
+                # Update session chat history
+                chat_history.append({'user': 'You', 'text': format_message(user_message)})
+                chat_history.append({'user': 'Bot', 'text': bot_response})
+                request.session['chat_history'] = chat_history
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'bot_response': bot_response
+                })
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No valid response generated.'
+                }, status=500)
+                
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error processing request: {str(e)}'
+            }, status=500)
+
+    # Handle regular GET request
     context = {
         'chat_history': chat_history,
-        'bot_response': bot_response or "Welcome to BeeSafe! Please enter your message."
     }
-
     return render(request, 'users/generate_password.html', context)
 
-import html
-
 def format_message(text):
+    """
+    Format the message with proper HTML structure, handling:
+    - Emojis
+    - Multiple levels of lists
+    - Section headers with emojis
+    - Bold text
+    - Regular paragraphs
+    """
+    if not text:
+        return ""
+
     lines = text.split('\n')
-    formatted_text = ""
-    in_list = False  # Track whether we're inside a list
-
+    formatted_text = []
+    in_list = False
+    in_nested_list = False
+    
     for line in lines:
-        line = line.strip()  # Clean any extra spaces
+        line = line.strip()
+        if not line:  # Handle empty lines
+            if in_nested_list:
+                formatted_text.append("  </ul>")
+                in_nested_list = False
+            if in_list:
+                formatted_text.append("</ul>")
+                in_list = False
+            formatted_text.append("<br>")
+            continue
 
-        # Check if the line is a list item (starts with "* ")
-        if line.startswith("* ") and not line[2:].startswith("*"):
+        # Handle section headers (lines with emojis)
+        if re.match(r'^[🔑🛡️🎯📝⚠️]', line):
+            if in_nested_list:
+                formatted_text.append("  </ul>")
+                in_nested_list = False
+            if in_list:
+                formatted_text.append("</ul>")
+                in_list = False
+            formatted_text.append(f'<h3 class="password-section">{html.escape(line)}</h3>')
+            continue
+
+        # Handle main bullet points
+        if line.startswith('* '):
             if not in_list:
-                formatted_text += "<ul>\n"  # Start a new unordered list
+                formatted_text.append('<ul class="password-list">')
                 in_list = True
-
-            # Handle bold text within list items
-            if "**" in line:
-                start_idx = line.find("**")
-                end_idx = line.rfind("**")
-                bold_text = line[start_idx + 2:end_idx]
-                before_bold = html.escape(line[2:start_idx])
-                after_bold = html.escape(line[end_idx + 2:])
-
-                formatted_text += f"<li>{before_bold.strip()}<b>{bold_text.strip()}</b>{after_bold.strip()}</li>\n"
+            
+            content = line[2:].strip()
+            # Check if it's a category description
+            if content.endswith(':'):
+                formatted_text.append(f'<li class="category"><strong>{html.escape(content)}</strong></li>')
             else:
-                formatted_text += f"<li>{html.escape(line[2:].strip())}</li>\n"
+                formatted_text.append(f'<li>{html.escape(content)}</li>')
+            continue
 
-        # Handle section headings or regular text
-        elif line.startswith("##") or line.startswith("**"):
-            if in_list:
-                formatted_text += "</ul>\n"  # Close the unordered list
-                in_list = False
-            formatted_text += f"<p><b>{html.escape(line.strip())}</b></p>\n"
+        # Handle nested bullet points (indented with -)
+        if line.startswith('  - '):
+            if not in_nested_list:
+                formatted_text.append('  <ul class="nested-password-list">')
+                in_nested_list = True
+            
+            content = line[4:].strip()
+            # Process bold text within brackets
+            content = re.sub(r'\[(.*?)\]', r'<strong>\1</strong>', html.escape(content))
+            formatted_text.append(f'    <li>{content}</li>')
+            continue
 
-        else:
-            if in_list:
-                formatted_text += "</ul>\n"  # Close the unordered list if it was open
-                in_list = False
-            formatted_text += f"<p>{html.escape(line.strip())}</p>\n"
+        # Handle regular text
+        if in_nested_list:
+            formatted_text.append("  </ul>")
+            in_nested_list = False
+        if in_list:
+            formatted_text.append("</ul>")
+            in_list = False
+        
+        # Process bold text wrapped in square brackets or asterisks
+        line = re.sub(r'\[(.*?)\]', r'<strong>\1</strong>', html.escape(line))
+        line = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', line)
+        formatted_text.append(f'<p>{line}</p>')
 
-    # Ensure any open list is closed at the end
+    # Close any open lists
+    if in_nested_list:
+        formatted_text.append("  </ul>")
     if in_list:
-        formatted_text += "</ul>\n"
+        formatted_text.append("</ul>")
 
-    return formatted_text
+    return '\n'.join(formatted_text)
 
 
 

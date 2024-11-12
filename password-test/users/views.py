@@ -150,6 +150,19 @@ def add_password_view(request):
 
     return render(request, 'users/add_password.html', {'form': form})
 
+@login_required
+def dashboard(request):
+    passwords = Password.objects.filter(user=request.user)
+    return render(request, 'users/dashboard.html', {'passwords': passwords})
+
+@login_required
+@verify_user_password
+def view_password(request, password_id):
+    password_instance = get_object_or_404(Password, id=password_id, user=request.user)
+    # Clear verification state after viewing the password
+    request.session.pop('verified_for_path', None)
+    return render(request, 'users/view_password.html', {'password': password_instance})
+
 def initialize_model(system_instruction):
     return genai.GenerativeModel("gemini-1.5-flash", system_instruction=system_instruction)
 

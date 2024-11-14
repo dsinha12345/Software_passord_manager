@@ -12,40 +12,39 @@
   <a href="{% url 'add_password' %}" class="add-password-btn">Add New Password</a>
 
   {% if passwords %}
-    <div class="table-responsive">
-      <table class="password-table">
-        <thead>
+  <div class="table-responsive">
+    <table class="password-table">
+      <thead>
+        <tr>
+          <th>Website</th>
+          <th>Username</th>
+          <th>Password</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for password in passwords %}
           <tr>
-            <th>Website</th>
-            <th>Username</th>
-            <th>Password</th>
-            <th>Actions</th>
+            <td>{{ password.service_name }}</td>
+            <td>{{ password.username }}</td>
+            <td class="password-cell">
+              <span class="password-mask">••••••••</span>
+              <a href="{% url 'view_password' password.id %}" class="view-btn">
+          <i class="fas fa-eye"></i>
+              </a>
+            </td>
+            <td class="actions-cell">
+              <a href="{% url 'edit_password' password.id %}" class="edit-btn">Edit</a>
+              <a href="{% url 'delete_password' password.id %}" class="delete-btn">Delete</a>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {% for password in passwords %}
-            <tr>
-              <td>{{ password.service_name }}</td>
-              <td>{{ password.username }}</td>
-              <td class="password-cell">
-                <span class="password-mask">••••••••</span>
-                <span class="password-text" style="display: none;">{{ password.password }}</span>
-                <button class="toggle-password">
-                  <i class="fas fa-eye"></i> <!-- Eye icon -->
-                </button>
-              </td>
-              <td class="actions-cell">
-                <a href="{% url 'edit_password' password.id %}" class="edit-btn">Edit</a>
-                <a href="{% url 'delete_password' password.id %}" class="delete-btn">Delete</a>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <p class="no-passwords">No passwords added yet. Click "Add New Password" to get started!</p>
-  {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="no-passwords">No passwords added yet. Click "Add New Password" to get started!</p>
+{% endif %}
 </div>
 
 <script>

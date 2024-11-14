@@ -23,3 +23,11 @@ class PasswordForm(forms.ModelForm):
         widgets = {
             'password': forms.PasswordInput(),  # Mask the password field for security
         }
+
+class VerifyUserPasswordForm(forms.Form):
+    password = forms.CharField(widget=forms.PasswordInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Enter your account password'
+    }))
+    # Hidden field to store the intended action
+    next_action = forms.CharField(widget=forms.HiddenInput(), required=False)

@@ -13,4 +13,5 @@ urlpatterns = [
     path('delete_password/<int:id>/', views.delete_password, name='delete_password'),
     path('logout/', views.CustomLogoutView.as_view(), name='logout'), 
     path('generate_password/', views.password_generator_view, name='generate_password'),
+    path('view-password/<int:password_id>/', views.view_password, name='view_password'),
 ]

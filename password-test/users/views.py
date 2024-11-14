@@ -1,20 +1,70 @@
 # users/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.hashers import check_password
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
-from .forms import UserRegisterForm, PasswordForm
+from .forms import UserRegisterForm, PasswordForm, VerifyUserPasswordForm
 from .models import Password
 from django.contrib.auth.decorators import login_required
 from django.views import View
 import os
 import google.generativeai as genai
-import html  # To escape special characters
 from django.http import JsonResponse
 import html
 import re
 
-genai.configure(api_key=os.environ.get("API_KEY"))
+api_key = os.getenv("API_KEY")
+genai.configure(api_key=api_key)
+
+def verify_user_password(view_func):
+    def wrapper(request, *args, **kwargs):
+        # Store the original path and method in session
+        
+        if 'verified_for_path' in request.session and request.session['verified_for_path'] == request.path:
+            
+            response = view_func(request, *args, **kwargs)
+        
+            if getattr(response, 'status_code', None) == 302:
+                request.session.pop('verified_for_path', None)
+            
+            return response
+            
+        if request.method == 'POST':
+            if 'verify_password' in request.POST:
+                verification_form = VerifyUserPasswordForm(request.POST)
+                if verification_form.is_valid():
+                    entered_password = verification_form.cleaned_data['password']
+                    if check_password(entered_password, request.user.password):
+                        request.session['verified_for_path'] = request.path
+                        # Redirect to the same URL, but now with verification
+                        return redirect(request.path)
+                    else:
+                        messages.error(request, 'Incorrect password. Please try again.')
+                        return render(request, 'users/verify_password.html', {
+                            'form': verification_form,
+                            'next_url': request.path
+                        })
+            
+            # If it's a POST but not a verification attempt, show the verification form
+            # This prevents bypassing verification on form submissions
+            verification_form = VerifyUserPasswordForm()
+            return render(request, 'users/verify_password.html', {
+                'form': verification_form,
+                'next_url': request.path
+            })
+        
+        # Show verification form for GET requests
+        verification_form = VerifyUserPasswordForm()
+        return render(request, 'users/verify_password.html', {
+            'form': verification_form,
+            'next_url': request.path
+        })
+    
+    return wrapper
+
+
+
 
 def register(request):
     if request.method == 'POST':
@@ -54,6 +104,7 @@ def dashboard(request):
     return render(request, 'users/dashboard.html', {'passwords': passwords})
 
 @login_required
+@verify_user_password
 def edit_password(request, id):
     password_instance = get_object_or_404(Password, id=id, user=request.user)
     if request.method == 'POST':
@@ -61,18 +112,28 @@ def edit_password(request, id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Password updated successfully!')
+            # Clear any remaining verification
+            request.session.pop('verified_for_path', None)
             return redirect('dashboard')
     else:
+        # For GET requests, show the form with existing data
         form = PasswordForm(instance=password_instance)
+    
     return render(request, 'users/password_form.html', {'form': form})
 
 @login_required
+@verify_user_password
 def delete_password(request, id):
     password_instance = get_object_or_404(Password, id=id, user=request.user)
     if request.method == 'POST':
-        password_instance.delete()
-        messages.success(request, 'Password deleted successfully!')
-        return redirect('dashboard')
+        if 'confirm_delete' in request.POST:
+            password_instance.delete()
+            messages.success(request, 'Password deleted successfully!')
+            # Clear any remaining verification
+            request.session.pop('verified_for_path', None)
+            return redirect('dashboard')
+    
+    # Show confirmation page
     return render(request, 'users/delete_password.html', {'password': password_instance})
 
 @login_required
@@ -89,6 +150,19 @@ def add_password_view(request):
         form = PasswordForm()
 
     return render(request, 'users/add_password.html', {'form': form})
+
+@login_required
+def dashboard(request):
+    passwords = Password.objects.filter(user=request.user)
+    return render(request, 'users/dashboard.html', {'passwords': passwords})
+
+@login_required
+@verify_user_password
+def view_password(request, password_id):
+    password_instance = get_object_or_404(Password, id=password_id, user=request.user)
+    # Clear verification state after viewing the password
+    request.session.pop('verified_for_path', None)
+    return render(request, 'users/view_password.html', {'password': password_instance})
 
 def initialize_model(system_instruction):
     return genai.GenerativeModel("gemini-1.5-flash", system_instruction=system_instruction)

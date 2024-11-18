@@ -1,5 +1,13 @@
 <!-- users/templates/users/home.html -->
 {% extends "base_generic.html" %}
+{% load static %}
+
 {% block content %}
-  <h2>Welcome to BeeSafe</h2>
+  <!-- Link to the external CSS file -->
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/styling.css' %}">
+
+  <!-- Content for the page -->
+  <h2>Welcome to BeeSafe <br>The internet's <em>safest</em> password securer and generator</h2>
+
 {% endblock %}

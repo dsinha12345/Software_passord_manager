@@ -1,0 +1,31 @@
+/* static/css/styling.css */
+
+html, body {
+  height: 100%; 
+}
+
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  background-color: #fff5cc !important;
+  background-image: 
+    radial-gradient(circle, rgba(255, 255, 255, 0.1) 25%, transparent 25%) 0 0,
+    radial-gradient(circle, rgba(255, 255, 255, 0.1) 25%, transparent 25%) 60px 60px !important;
+  background-size: 120px 120px;
+  background-repeat: repeat;
+}
+
+
+h2 {
+  margin: 10px 0; /* Adds space between headings */
+  padding: 0;
+  font-size: 2em; /* Adjust the size of the heading */
+  color: #6a4e1f; /* Dark brown color */
+}
+
+em {
+  font-style: italic;
+  color: #ff9800; /* Optional: Make it stand out */
+}

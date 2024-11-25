@@ -1,0 +1,24 @@
+
+{% extends 'base_generic.html' %}
+{% block content %}
+
+<div class="delete-account-container">
+    <h2>Delete Account</h2>
+    <div class="warning-box">
+        <p>Warning: This action cannot be undone. All your saved passwords will be permanently deleted.</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="current_password">Enter your password to confirm:</label>
+            <input type="password" name="current_password" required class="form-control">
+        </div>
+        <div class="button-group">
+            <button type="submit" class="btn btn-danger">Confirm Delete</button>
+            <a href="{% url 'account' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

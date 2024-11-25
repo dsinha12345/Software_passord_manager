@@ -13,6 +13,11 @@ import html  # To escape special characters
 from django.http import JsonResponse
 import html
 import re
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.hashers import check_password
+from .forms import EmailChangeForm
+from django.urls import reverse
 
 genai.configure(api_key=os.environ.get("API_KEY"))
 
@@ -89,6 +94,70 @@ def add_password_view(request):
         form = PasswordForm()
 
     return render(request, 'users/add_password.html', {'form': form})
+
+@login_required
+def account_view(request):
+    email_form = EmailChangeForm(instance=request.user)
+    password_form = PasswordChangeForm(request.user)
+    
+    context = {
+        'email_form': email_form,
+        'password_form': password_form,
+        'user': request.user,
+        'messages': messages.get_messages(request)  # Explicitly get messages
+    }
+    return render(request, 'users/account.html', context)
+
+@login_required
+def change_email(request):
+    if request.method == 'POST':
+        form = EmailChangeForm(request.POST, instance=request.user)
+        password = request.POST.get('current_password')
+        
+        if not check_password(password, request.user.password):
+            messages.error(request, 'Incorrect password.')
+            return redirect('account')
+            
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your email has been updated successfully.')
+            # Use reverse to get the full URL
+            return redirect(reverse('account') + '?action=email_updated')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    
+    return redirect('account')
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect(reverse('account') + '?action=password_updated')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    
+    return redirect('account')
+
+@login_required
+def delete_account(request):
+    if request.method == 'POST':
+        password = request.POST.get('current_password')
+        if check_password(password, request.user.password):
+            # Delete all user's passwords first
+            Password.objects.filter(user=request.user).delete()
+            # Delete the user account
+            request.user.delete()
+            messages.success(request, 'Your account has been successfully deleted.')
+            return redirect('home')
+        else:
+            messages.error(request, 'Incorrect password.')
+            return redirect(reverse('account') + '?action=delete_failed')
+    
+    return render(request, 'users/delete_account.html')
 
 def initialize_model(system_instruction):
     return genai.GenerativeModel("gemini-1.5-flash", system_instruction=system_instruction)

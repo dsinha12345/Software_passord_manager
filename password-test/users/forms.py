@@ -24,6 +24,16 @@ class PasswordForm(forms.ModelForm):
             'password': forms.PasswordInput(),  # Mask the password field for security
         }
 
+class EmailChangeForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['email']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs.update({'class': 'form-control'})
+        
+
 class VerifyUserPasswordForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput(attrs={
         'class': 'form-control',

@@ -112,7 +112,10 @@ class UserViewsTestCase(TestCase):
             username='exampleuser',
             password='examplepassword'
         )
-        response = self.client.post(reverse('delete_password', args=[password_instance.id]))
+        response = self.client.post(
+    reverse('delete_password', args=[password_instance.id]),
+    {'confirm_delete': 'true'}  # Add the hidden input's value
+    )
         self.assertEqual(response.status_code, 302)  # Expect a redirect after deleting password
         self.assertFalse(Password.objects.filter(id=password_instance.id).exists())
 

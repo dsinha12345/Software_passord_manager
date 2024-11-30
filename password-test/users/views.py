@@ -109,7 +109,6 @@ def dashboard(request):
     return render(request, 'users/dashboard.html', {'passwords': passwords})
 
 @login_required
-@verify_user_password
 def edit_password(request, id):
     password_instance = get_object_or_404(Password, id=id, user=request.user)
     if request.method == 'POST':
@@ -127,7 +126,6 @@ def edit_password(request, id):
     return render(request, 'users/password_form.html', {'form': form})
 
 @login_required
-@verify_user_password
 def delete_password(request, id):
     password_instance = get_object_or_404(Password, id=id, user=request.user)
     if request.method == 'POST':

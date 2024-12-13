@@ -1,0 +1,164 @@
+/* static/style.css */
+body {
+  
+  /*font-family: Lucida Console, monospace;*/
+    margin: 0;
+    padding: 0;
+    background-color: #fce9b7;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; 
+    
+}
+
+header {
+    background-color: #000000;
+    color: #fce9b7;
+    padding: 10px 0;
+    text-align: center;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+}
+
+nav a {
+    /*color: #f2cb8a;*/
+    color:#f2cb8a;
+    margin: 0 15px;
+    text-decoration: none;
+}
+
+.h1center-container {
+    display: flex; /* Use Flexbox for centering */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    /*height: 30vh; /* Full viewport height */
+    text-align: center; /* Optional: Center-align text inside the container */
+  }
+  .h2center-container {
+    display: flex; /* Use Flexbox for centering */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    /*height: 10vh; /* Full viewport height */
+    text-align: center; /* Optional: Center-align text inside the container */
+  }
+  .h3center-container {
+    display: flex; /* Use Flexbox for centering */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    /*height: 100vh; /* Full viewport height */
+    text-align: center; /* Optional: Center-align text inside the container */
+  }
+
+.img {
+    display: flex; /* Use Flexbox for centering */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /
+}
+
+h1 {
+    font-size: 40px;
+    font-family: Georgia, serif;
+    
+}
+
+h2{
+    font-size: 30px;
+    font-family: Georgia, serif;
+}
+h3 
+{
+    font-size: 20px;
+    font-family: Georgia, serif;
+}
+/*main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}*/
+
+.content-wrapper {
+    background-color: #fce9b7;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 900px;
+    width: 100%;
+}
+
+
+/* Center text within divs */
+div {
+    text-align: center;
+}
+
+.button_header {
+    width: 80%;
+    padding: 10px;
+    background-color:#f5896f;
+    color: #ffffff;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.button_header:hover {
+    background-color: #b8490e;
+}
+
+.custom-navbar {
+    background-color: #f2cb8a ; /* Example custom color */
+}
+
+.form-container {
+    max-width: 70%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+  
+ /* .grid-container {
+    display: grid;
+    grid-template-columns: repeat(1, 100px);
+    grid-template-rows: repeat(2, 100px);
+  }*/
+
+  .honeycomb {
+    display: grid;
+    grid-template-columns: repeat(3, 75px); /* Adjust the number of columns */
+    grid-auto-rows: 30px; /* Adjust the height of each row */
+    gap: 50px;
+    position: absolute;
+    margin: 20px;
+  }
+  .top-right {
+    top: 90px; /* Distance from the top */
+    right: 50px; /* Distance from the right */
+  }
+
+  /* Bottom-left honeycomb */
+  .bottom-left {
+    bottom: 10px; /* Distance from the bottom */
+    left: 10px; /* Distance from the left */
+  }
+
+  .hex  {
+    height: 75px;
+    aspect-ratio: 1/cos(30deg);
+    background: #f2cb8a; /* Hexagon color */
+    clip-path: polygon(50% -50%,100% 50%,50% 150%,0 50%);
+  }
+
+  /* Offset every alternate row for the honeycomb effect */
+  .hex:nth-child(odd) {
+    transform: translateX(50px); /* Half of the hexagon's width */
+  }
+  
